@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gen Dimension | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Login Screen ── */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #login-screen.hidden { display: none; }
+
+    .login-box {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    }
+
+    .login-box .logo {
+      color: var(--accent);
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-box p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-family: inherit;
+      margin-bottom: 0.75rem;
+    }
+
+    .login-box input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .login-box .btn { width: 100%; padding: 0.75rem; font-size: 1rem; }
+
+    #login-error {
+      color: #e53935;
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      min-height: 1.2em;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    /* ── Dashboard Layout ── */
+    #dashboard { display: none; }
+    #dashboard.visible { display: block; }
+
+    .admin-header {
+      background: var(--primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .admin-header nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+    }
+
+    .admin-header .logo { color: var(--accent); font-size: 1.4rem; font-weight: 700; }
+    .admin-header .nav-right { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .admin-header .nav-right span { color: #aaa; font-size: 0.85rem; }
+    .admin-header .nav-right .btn { min-height: 44px; }
+
+    .dashboard-body {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ── Stats Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.6rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--accent);
+    }
+
+    .stat-card.blue  { border-color: #2196f3; }
+    .stat-card.green { border-color: #4caf50; }
+    .stat-card.gold  { border-color: var(--accent); }
+    .stat-card.dark  { border-color: var(--primary); }
+
+    .stat-card .stat-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .toolbar input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .toolbar select {
+      padding: 0.6rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: var(--white);
+      cursor: pointer;
+    }
+
+    .toolbar input:focus,
+    .toolbar select:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Orders Panel ── */
+    .orders-panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .orders-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .orders-panel-header h2 { font-size: 1.1rem; }
+    .orders-panel-header span { color: var(--muted); font-size: 0.85rem; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      background: var(--primary);
+      color: var(--white);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th:hover { background: #3a3a3a; }
+    thead th.sorted-asc::after  { content: " ↑"; color: var(--accent); }
+    thead th.sorted-desc::after { content: " ↓"; color: var(--accent); }
+
+    tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+
+    tbody tr:hover td { background: #fafaf7; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .order-id { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 0.9rem; }
+    .customer-name { font-weight: 600; }
+    .customer-email { color: var(--muted); font-size: 0.8rem; }
+
+    /* ── Status Badge ── */
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 50px;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .status-new        { background: var(--accent); color: var(--primary); }
+    .status-processing { background: #2196f3; }
+    .status-done       { background: #4caf50; }
+
+    /* ── Action Buttons ── */
+    .actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: nowrap; }
+
+    .btn-advance {
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-advance:hover { background: #444; }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid #e0e0e0;
+      color: #e53935;
+      padding: 0.3rem 0.55rem;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-delete:hover { background: #fdecea; border-color: #e53935; }
+
+    .done-tick { color: #4caf50; font-size: 0.85rem; white-space: nowrap; }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+
+    .empty-state p { margin-top: 0.5rem; font-size: 0.9rem; }
+
+    /* ── Toast ── */
+    #admin-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--primary);
+      color: var(--white);
+      padding: 0.8rem 1.4rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    #admin-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Admin Tabs ── */
+    .admin-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid rgba(0,0,0,0.08);
+    }
+
+    .admin-tab-btn {
+      padding: 0.65rem 1.4rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .admin-tab-btn:hover { color: var(--primary); }
+
+    .admin-tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Newsletter table ── */
+    .nl-empty {
+      padding: 3rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    /* ── Responsive ── */
+
+    /* Tablet ≤ 768px */
+    @media (max-width: 768px) {
+      .stats-grid         { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-body     { padding: 1.25rem 1.2rem; }
+      .admin-header nav   { padding: 0.75rem 1.2rem; }
+
+      .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      table { min-width: 700px; }
+
+      .toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+    }
+
+    /* Mobile ≤ 480px */
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+
+      .stat-card .stat-value { font-size: 1.6rem; }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar input[type="text"],
+      .toolbar select,
+      .toolbar .btn {
+        width: 100%;
+      }
+
+      .login-box { padding: 2rem 1.25rem; }
+
+      .admin-header .nav-right { gap: 0.5rem; }
+      .admin-header .nav-right .btn { font-size: 0.8rem; padding: 0.35rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Login Screen ── -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="logo">Gen Dimension</div>
+      <p>Admin Dashboard — Sign in to continue</p>
+      <form id="login-form" novalidate>
+        <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" />
+        <button type="submit" class="btn">Sign In</button>
+        <div id="login-error"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="dashboard">
+
+    <header class="admin-header">
+      <nav>
+        <div class="logo">Gen Dimension &mdash; Admin</div>
+        <div class="nav-right">
+          <span id="admin-greeting"></span>
+          <a href="index.html" class="btn" style="font-size:0.85rem;padding:0.4rem 1rem;">View Site</a>
+          <button class="btn" id="logout-btn" style="font-size:0.85rem;padding:0.4rem 1rem;background:#444;">Logout</button>
+        </div>
+      </nav>
+    </header>
+
+    <div class="dashboard-body">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card dark">
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">all time</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Revenue</div>
+          <div class="stat-value" id="stat-revenue">R 0</div>
+          <div class="stat-sub">all orders</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">New Orders</div>
+          <div class="stat-value" id="stat-new">0</div>
+          <div class="stat-sub">awaiting action</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Fulfilled</div>
+          <div class="stat-value" id="stat-done">0</div>
+          <div class="stat-sub">completed</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <input type="text" id="search-input" placeholder="Search by Order ID, customer, product…" />
+        <select id="filter-status">
+          <option value="">All Statuses</option>
+          <option value="new">New</option>
+          <option value="processing">Processing</option>
+          <option value="done">Done</option>
+        </select>
+        <button class="btn" onclick="exportOrders()">Export CSV</button>
+      </div>
+
+      <!-- Product Images -->
+      <div class="orders-panel" style="margin-bottom:1.5rem">
+        <div class="orders-panel-header">
+          <h2>Product Images</h2>
+          <span style="color:var(--muted);font-size:0.85rem">Click Upload on any product to set its image</span>
+        </div>
+        <div style="padding:1.25rem">
+          <div id="product-img-grid" class="product-img-grid"></div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="admin-tabs">
+        <button class="admin-tab-btn active" data-tab="orders">Orders</button>
+        <button class="admin-tab-btn" data-tab="newsletter">Newsletter</button>
+        <button class="admin-tab-btn" data-tab="products">Products</button>
+      </div>
+
+      <!-- Orders Tab -->
+      <div class="admin-tab-panel" id="tab-orders">
+        <div class="orders-panel">
+          <div class="orders-panel-header">
+            <h2>Orders</h2>
+            <span id="orders-count-label"></span>
+          </div>
+          <div class="table-wrap">
+            <div id="orders-table-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Newsletter Tab -->
+      <div class="admin-tab-panel" id="tab-newsletter" style="display:none">
+        <div class="orders-panel">
+          <div class="orders-panel-header">
+            <h2>Newsletter Subscribers</h2>
+            <span id="nl-count-label"></span>
+          </div>
+          <div style="padding:1rem 1.25rem 0.5rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+            <input type="text" id="nl-search" placeholder="Search email or date…" style="flex:1;min-width:200px;padding:0.55rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit" />
+            <button class="btn" onclick="exportNewsletter()">Export CSV</button>
+            <button class="btn" style="background:transparent;color:#e53935;border:1.5px solid #e53935" onclick="clearNewsletter()">Clear All</button>
+          </div>
+          <div class="table-wrap">
+            <div id="nl-table-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Tab -->
+      <div class="admin-tab-panel" id="tab-products" style="display:none">
+        <div class="orders-panel">
+          <div class="orders-panel-header">
+            <h2>Products</h2>
+            <span id="products-count-label"></span>
+          </div>
+          <div class="table-wrap">
+            <div id="products-list"></div>
+          </div>
+        </div>
+
+        <div class="orders-panel" style="margin-top:1.5rem">
+          <div class="orders-panel-header">
+            <h2>Add Product</h2>
+          </div>
+          <div style="padding:1.25rem">
+            <form id="add-product-form" style="display:grid;gap:0.75rem;max-width:500px">
+              <input type="text" name="product-name" placeholder="Product name" required
+                style="padding:0.65rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit" />
+              <select name="product-category"
+                style="padding:0.65rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit">
+                <option value="">Select category</option>
+                <option value="TV Stand">TV Stand</option>
+                <option value="Drawer">Drawer</option>
+                <option value="Seating">Seating</option>
+                <option value="Tables">Tables</option>
+                <option value="Storage">Storage</option>
+                <option value="Bedroom">Bedroom</option>
+              </select>
+              <input type="number" name="product-price" placeholder="Price (ZAR)" min="1" step="0.01" required
+                style="padding:0.65rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit" />
+              <textarea name="product-description" placeholder="Description" rows="2"
+                style="padding:0.65rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit;resize:vertical"></textarea>
+              <input type="url" name="product-image" placeholder="Image URL (optional)"
+                style="padding:0.65rem 0.9rem;border:1px solid #ddd;border-radius:var(--radius);font-size:0.9rem;font-family:inherit" />
+              <button type="submit" class="btn" style="justify-self:start">Add Product</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dashboard-body -->
+  </div><!-- /dashboard -->
+
+  <div id="admin-toast"></div>
+
+  <!-- WhatsApp Floating Button -->
+  <a
+    class="wa-btn"
+    href="https://wa.me/27798796513?text=Hi!%20I'm%20interested%20in%20your%20furniture.%20Can%20you%20help%20me%3F"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Chat with us on WhatsApp"
+  >
+    <span class="wa-tooltip">Chat with us</span>
+    <svg class="wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12.001 2C6.478 2 2 6.478 2 12c0 1.85.504 3.58 1.38 5.065L2.05 21.95l5.02-1.31A9.954 9.954 0 0 0 12.001 22C17.523 22 22 17.522 22 12S17.523 2 12.001 2zm0 1.5A8.5 8.5 0 0 1 20.5 12a8.5 8.5 0 0 1-8.499 8.5c-1.65 0-3.192-.472-4.497-1.287l-.32-.202-3.31.864.882-3.224-.22-.337A8.46 8.46 0 0 1 3.5 12 8.5 8.5 0 0 1 12.001 3.5zm-2.21 4.51c-.195-.435-.4-.444-.585-.451l-.498-.006c-.174 0-.456.065-.694.326-.239.26-.912.89-.912 2.17s.933 2.517 1.063 2.692c.13.174 1.81 2.891 4.462 3.933 2.207.87 2.652.697 3.13.654.477-.043 1.54-.63 1.757-1.237.217-.608.217-1.129.152-1.237-.065-.108-.24-.173-.5-.303-.26-.13-1.54-.76-1.779-.847-.24-.087-.413-.13-.587.13-.174.26-.673.847-.825 1.02-.152.174-.304.196-.564.066-.26-.13-1.096-.404-2.088-1.29-.772-.688-1.293-1.537-1.445-1.797-.152-.26-.016-.4.114-.53.117-.116.26-.303.39-.455.128-.152.17-.26.26-.434.086-.174.042-.326-.022-.456-.065-.13-.574-1.42-.806-1.94z"/>
+    </svg>
+  </a>
+
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // ════════════════════════════════════════════════════════════
+    // Admin Dashboard — API-backed inline script
+    // ════════════════════════════════════════════════════════════
+
+    const SESSION_KEY   = 'gd_admin_auth';
+    const LOCKOUT_KEY   = 'gd_admin_lockout';
+    const ATTEMPTS_KEY  = 'gd_admin_attempts';
+    const MAX_ATTEMPTS  = 3;
+    const LOCKOUT_SECS  = 30;
+
+    // ── Safe JSON fetch ───────────────────────────────────────────
+    async function adminFetch(url, options = {}) {
+      const res  = await fetch(url, options);
+      const text = await res.text();
+      try {
+        return { ok: res.ok, status: res.status, data: JSON.parse(text) };
+      } catch (_) {
+        console.error(`[Admin API] Non-JSON from ${url} (HTTP ${res.status}):\n`, text);
+        return {
+          ok: false,
+          status: res.status,
+          data: { error: `Server error (HTTP ${res.status}) — see F12 console` },
+        };
+      }
+    }
+
+    // ── Auth ─────────────────────────────────────────────────────
+    function showDashboard() {
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("dashboard").classList.add("visible");
+      const hour     = new Date().getHours();
+      const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+      document.getElementById("admin-greeting").textContent = greeting;
+      loadDashboard();
+      renderOrders();
+    }
+
+    // ── Toast ────────────────────────────────────────────────────
+    let _adminToastTimer;
+    function showToast(msg) {
+      const el = document.getElementById("admin-toast");
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(_adminToastTimer);
+      _adminToastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+    }
+
+    // ── HTML escape ──────────────────────────────────────────────
+    function escapeAdminHtml(str) {
+      const d = document.createElement("div");
+      d.textContent = String(str ?? "");
+      return d.innerHTML;
+    }
+
+    // ── Dashboard (stats + recent) ────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const { ok, data } = await adminFetch("backend/admin-api.php?action=dashboard");
+        if (!ok) { showToast("Dashboard error: " + (data.error || "Unknown")); return; }
+        renderStats(data.stats);
+        document.getElementById("stat-done").textContent = data.stats.done;
+        if (data.newsletterCount !== undefined) {
+          const el = document.getElementById("nl-count-label");
+          if (el) el.textContent = data.newsletterCount + " subscriber" + (data.newsletterCount !== 1 ? "s" : "");
+        }
+      } catch (e) {
+        console.error("Dashboard load failed:", e);
+        showToast("Could not load dashboard. Check backend connection.");
+      }
+    }
+
+    function renderStats(stats) {
+      if (!stats) return;
+      document.getElementById("stat-total").textContent   = stats.total   ?? 0;
+      document.getElementById("stat-revenue").textContent = "R\u00a0" + (stats.revenue ?? 0).toLocaleString("en-ZA", { minimumFractionDigits: 2 });
+      document.getElementById("stat-new").textContent     = stats.new     ?? 0;
+      document.getElementById("stat-done").textContent    = stats.done    ?? 0;
+    }
+
+    // ── Orders table ─────────────────────────────────────────────
+    let _currentSearch = "";
+    let _currentStatus = "";
+
+    async function renderOrders(search, status) {
+      if (search !== undefined) _currentSearch = search;
+      if (status !== undefined) _currentStatus = status;
+
+      let url = "backend/orders.php";
+      const params = [];
+      if (_currentSearch) params.push("search=" + encodeURIComponent(_currentSearch));
+      if (_currentStatus) params.push("status=" + encodeURIComponent(_currentStatus));
+      if (params.length)  url += "?" + params.join("&");
+
+      const container = document.getElementById("orders-table-container");
+      if (!container) return;
+
+      try {
+        const { ok, data: orders } = await adminFetch(url);
+        if (!ok) { container.innerHTML = `<div class="empty-state"><strong>${orders.error || "Failed to load orders"}</strong><p>Check server — open F12 for details.</p></div>`; return; }
+
+        const label = document.getElementById("orders-count-label");
+        if (label) label.textContent = `${orders.length} order${orders.length !== 1 ? "s" : ""}`;
+
+        if (!orders.length) {
+          container.innerHTML = `<div class="empty-state"><strong>No orders found</strong><p>Try adjusting your search or filter.</p></div>`;
+          return;
+        }
+
+        const PAYMENT_MAP = {
+          paid:        { cls: "pay-paid",    label: "Paid"        },
+          pending_eft: { cls: "pay-pending", label: "Pending EFT" },
+          unpaid:      { cls: "pay-unpaid",  label: "Unpaid"      },
+        };
+        const STATUS_LABEL_MAP = { new: "New", processing: "Processing", done: "Done", cancelled: "Cancelled" };
+        const STATUS_FLOW      = ["new", "processing", "done"];
+
+        const rows = orders.map(o => {
+          const items       = Array.isArray(o.items) ? o.items : [];
+          const next        = STATUS_FLOW[STATUS_FLOW.indexOf(o.status) + 1] || null;
+          const statusCls   = `status-badge status-${o.status}`;
+          const statusLabel = STATUS_LABEL_MAP[o.status] || o.status;
+
+          const advanceBtn = next
+            ? `<button class="btn-advance" onclick="updateStatus('${escapeAdminHtml(o.id)}','${next}')">
+                 \u2192 ${next.charAt(0).toUpperCase() + next.slice(1)}
+               </button>`
+            : `<span class="done-tick">\u2713 Done</span>`;
+
+          const ps       = PAYMENT_MAP[o.payment_status] || PAYMENT_MAP.unpaid;
+          const payBadge = `<span class="pay-badge ${ps.cls}">${ps.label}</span>`;
+
+          const productCell = items.length > 1
+            ? `<div class="multi-items">
+                 <span class="item-count-badge">${items.length} items</span>
+                 ${items.map(i => `<div class="multi-item-row">${escapeAdminHtml(i.name)} &times;${i.qty}</div>`).join("")}
+               </div>`
+            : (items[0] ? escapeAdminHtml(items[0].name) : "—");
+
+          const qtyCell        = items.reduce((s, i) => s + (i.qty || 0), 0) || "—";
+          const totalFormatted = o.total != null
+            ? "R\u00a0" + parseFloat(o.total).toLocaleString("en-ZA", { minimumFractionDigits: 2 })
+            : "—";
+
+          return `
+            <tr>
+              <td><span class="order-id">${escapeAdminHtml(o.id)}</span></td>
+              <td>
+                <div class="customer-name">${escapeAdminHtml(o.customer_name)}</div>
+                <div class="customer-email">${escapeAdminHtml(o.customer_email)}</div>
+              </td>
+              <td>${productCell}</td>
+              <td>${qtyCell}</td>
+              <td style="max-width:160px;white-space:normal">${escapeAdminHtml(o.delivery_address)}</td>
+              <td>${escapeAdminHtml(o.customer_phone)}</td>
+              <td style="white-space:nowrap">${totalFormatted}</td>
+              <td style="white-space:nowrap">${escapeAdminHtml(o.created_at || "")}</td>
+              <td><span class="${statusCls}">${statusLabel}</span></td>
+              <td>${payBadge}</td>
+              <td>
+                <div class="actions">
+                  ${advanceBtn}
+                  <button class="btn-delete" onclick="deleteOrder('${escapeAdminHtml(o.id)}')" title="Delete">&times;</button>
+                </div>
+              </td>
+            </tr>`;
+        }).join("");
+
+        container.innerHTML = `
+          <table>
+            <thead><tr>
+              <th>Order ID</th><th>Customer</th><th>Product</th><th>Qty</th>
+              <th>Address</th><th>Phone</th><th>Total</th><th>Date</th>
+              <th>Status</th><th>Payment</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+
+      } catch (e) {
+        console.error("Orders load failed:", e);
+        container.innerHTML = `<div class="empty-state"><strong>Could not load orders.</strong><p>Check backend connection.</p></div>`;
+      }
+    }
+
+    // ── Update order status ───────────────────────────────────────
+    async function updateStatus(id, status) {
+      try {
+        const { ok, data } = await adminFetch("backend/orders.php", {
+          method:  "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ id, status }),
+        });
+        if (ok) {
+          showToast("Status updated.");
+          renderOrders();
+          loadDashboard();
+        } else {
+          showToast("Update failed: " + (data.error || "Unknown error"));
+        }
+      } catch (e) {
+        console.error("[Admin] Update error:", e);
+        showToast("Network error. Check F12 console.");
+      }
+    }
+
+    // ── Delete order ──────────────────────────────────────────────
+    async function deleteOrder(id) {
+      if (!confirm("Delete order " + id + "? This cannot be undone.")) return;
+      try {
+        const { ok, data } = await adminFetch("backend/orders.php?id=" + encodeURIComponent(id), { method: "DELETE" });
+        if (ok) {
+          showToast("Order deleted.");
+          renderOrders();
+          loadDashboard();
+        } else {
+          showToast("Delete failed: " + (data.error || "Unknown error"));
+        }
+      } catch (e) {
+        console.error("[Admin] Delete error:", e);
+        showToast("Network error. Check F12 console.");
+      }
+    }
+
+    // ── Export ────────────────────────────────────────────────────
+    function exportOrders() {
+      window.open("backend/admin-api.php?action=export-orders");
+    }
+
+    function exportNewsletter() {
+      window.open("backend/admin-api.php?action=export-newsletter");
+    }
+
+    // ── Newsletter ────────────────────────────────────────────────
+    async function renderNewsletterTable() {
+      const container = document.getElementById("nl-table-container");
+      if (!container) return;
+
+      const q = (document.getElementById("nl-search")?.value || "").toLowerCase().trim();
+
+      try {
+        const { ok, data: subs_raw } = await adminFetch("backend/newsletter.php");
+        if (!ok) { container.innerHTML = `<div class="nl-empty">Error: ${subs_raw.error || "Could not load"} — see F12.</div>`; return; }
+        let   subs = subs_raw;
+
+        if (q) subs = subs.filter(s =>
+          s.email.toLowerCase().includes(q) ||
+          (s.subscribed_at || "").includes(q)
+        );
+
+        const countEl = document.getElementById("nl-count-label");
+        if (countEl) countEl.textContent = subs.length + " subscriber" + (subs.length !== 1 ? "s" : "");
+
+        if (!subs.length) {
+          container.innerHTML = '<div class="nl-empty">No subscribers yet.</div>';
+          return;
+        }
+
+        const rows = subs.map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${escapeAdminHtml(s.email)}</td>
+            <td>${escapeAdminHtml(s.subscribed_at || "—")}</td>
+            <td>
+              <button class="action-btn" style="color:#e53935;border-color:#e53935"
+                onclick="removeSubscriber(${s.id})">Remove</button>
+            </td>
+          </tr>`).join("");
+
+        container.innerHTML = `
+          <table>
+            <thead><tr><th>#</th><th>Email</th><th>Subscribed</th><th>Action</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+
+      } catch (e) {
+        container.innerHTML = '<div class="nl-empty">Could not load subscribers.</div>';
+      }
+    }
+
+    async function removeSubscriber(id) {
+      try {
+        await adminFetch("backend/newsletter.php?id=" + id, { method: "DELETE" });
+        showToast("Subscriber removed.");
+        renderNewsletterTable();
+        loadDashboard();
+      } catch (e) {
+        showToast("Remove failed.");
+      }
+    }
+
+    async function clearNewsletter() {
+      if (!confirm("Remove all newsletter subscribers? This cannot be undone.")) return;
+      try {
+        const { data: subs } = await adminFetch("backend/newsletter.php");
+        await Promise.all(subs.map(s =>
+          adminFetch("backend/newsletter.php?id=" + s.id, { method: "DELETE" })
+        ));
+        showToast("Subscriber list cleared.");
+        renderNewsletterTable();
+        loadDashboard();
+      } catch (e) {
+        showToast("Clear failed.");
+      }
+    }
+
+    // ── Products ──────────────────────────────────────────────────
+    async function renderAdminProducts() {
+      const container = document.getElementById("products-list");
+      if (!container) return;
+      container.innerHTML = '<div class="empty-state"><p>Loading…</p></div>';
+
+      try {
+        const { ok, data } = await adminFetch("backend/products.php");
+        if (!ok) {
+          container.innerHTML = `<div class="empty-state"><strong>${data.error || "Failed to load"}</strong></div>`;
+          return;
+        }
+        const label = document.getElementById("products-count-label");
+        if (label) label.textContent = data.length + " product" + (data.length !== 1 ? "s" : "");
+
+        if (!data.length) {
+          container.innerHTML = '<div class="empty-state"><strong>No products yet.</strong><p>Add one below.</p></div>';
+          return;
+        }
+
+        const rows = data.map(p => `
+          <tr>
+            <td>${escapeAdminHtml(p.id)}</td>
+            <td>${escapeAdminHtml(p.name)}</td>
+            <td>${escapeAdminHtml(p.category)}</td>
+            <td>R\u00a0${parseFloat(p.price).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}</td>
+            <td style="max-width:220px;white-space:normal">${escapeAdminHtml(p.description)}</td>
+            <td>
+              <button class="btn-delete" onclick="adminDeleteProduct(${p.id},'${escapeAdminHtml(p.name).replace(/'/g,"\\'")}')">
+                &times;
+              </button>
+            </td>
+          </tr>`).join("");
+
+        container.innerHTML = `
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Description</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      } catch (e) {
+        container.innerHTML = '<div class="empty-state"><strong>Could not load products.</strong></div>';
+      }
+    }
+
+    async function adminDeleteProduct(id, name) {
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const { ok, data } = await adminFetch("backend/products.php?id=" + id, { method: "DELETE" });
+        if (ok) {
+          showToast("Product deleted.");
+          renderAdminProducts();
+          loadProducts().then(renderProductImageCards);
+        } else {
+          showToast("Delete failed: " + (data.error || "Unknown"));
+        }
+      } catch (e) {
+        showToast("Network error.");
+      }
+    }
+
+    // ── DOMContentLoaded boot ────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", () => {
+
+      // ── Lockout helpers ───────────────────────────────────────
+      function getLockoutRemaining() {
+        const until = parseInt(sessionStorage.getItem(LOCKOUT_KEY) || "0");
+        return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+      }
+
+      function setLockout() {
+        sessionStorage.setItem(LOCKOUT_KEY, Date.now() + LOCKOUT_SECS * 1000);
+        sessionStorage.setItem(ATTEMPTS_KEY, "0");
+      }
+
+      function getAttempts() {
+        return parseInt(sessionStorage.getItem(ATTEMPTS_KEY) || "0");
+      }
+
+      function bumpAttempts() {
+        const n = getAttempts() + 1;
+        sessionStorage.setItem(ATTEMPTS_KEY, n);
+        return n;
+      }
+
+      function shakePw() {
+        const el = document.getElementById("login-password");
+        el.classList.remove("shake");
+        void el.offsetWidth; // reflow
+        el.classList.add("shake");
+        el.value = "";
+        el.focus();
+        el.addEventListener("animationend", () => el.classList.remove("shake"), { once: true });
+      }
+
+      // Login form
+      document.getElementById("login-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Lockout check
+        const remaining = getLockoutRemaining();
+        if (remaining > 0) {
+          document.getElementById("login-error").textContent =
+            `Too many attempts. Try again in ${remaining}s.`;
+          return;
+        }
+
+        const pass = document.getElementById("login-password").value;
+        try {
+          const { ok } = await adminFetch("backend/admin-auth.php", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ password: pass }),
+          });
+          if (ok) {
+            sessionStorage.setItem(SESSION_KEY, "true");
+            sessionStorage.removeItem(ATTEMPTS_KEY);
+            sessionStorage.removeItem(LOCKOUT_KEY);
+            document.getElementById("login-error").textContent = "";
+            showDashboard();
+          } else {
+            const attempts = bumpAttempts();
+            shakePw();
+            if (attempts >= MAX_ATTEMPTS) {
+              setLockout();
+              document.getElementById("login-error").textContent =
+                `Too many attempts. Locked for ${LOCKOUT_SECS} seconds.`;
+            } else {
+              document.getElementById("login-error").textContent =
+                `Incorrect password. ${MAX_ATTEMPTS - attempts} attempt${MAX_ATTEMPTS - attempts !== 1 ? "s" : ""} remaining.`;
+            }
+          }
+        } catch {
+          document.getElementById("login-error").textContent = "Server error. Try again.";
+        }
+      });
+
+      // Logout
+      document.getElementById("logout-btn").addEventListener("click", async () => {
+        await adminFetch("backend/admin-auth.php", { method: "DELETE" });
+        sessionStorage.removeItem(SESSION_KEY);
+        location.reload();
+      });
+
+      // Live search + filter
+      document.getElementById("search-input").addEventListener("input", e => {
+        renderOrders(e.target.value, undefined);
+      });
+      document.getElementById("filter-status").addEventListener("change", e => {
+        renderOrders(undefined, e.target.value);
+      });
+
+      // Tab switching
+      document.querySelectorAll(".admin-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
+          document.querySelectorAll(".admin-tab-panel").forEach(p => p.style.display = "none");
+          btn.classList.add("active");
+          const panel = document.getElementById("tab-" + btn.dataset.tab);
+          if (panel) panel.style.display = "block";
+          if (btn.dataset.tab === "newsletter") renderNewsletterTable();
+          if (btn.dataset.tab === "products")   renderAdminProducts();
+        });
+      });
+
+      // Add product form
+      document.getElementById("add-product-form")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const name = form["product-name"].value.trim();
+        try {
+          const { ok, data } = await adminFetch("backend/products.php", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({
+              name,
+              category:    form["product-category"].value,
+              price:       parseFloat(form["product-price"].value),
+              description: form["product-description"].value.trim(),
+              image:       form["product-image"].value.trim(),
+            }),
+          });
+          if (ok && data.success) {
+            form.reset();
+            showToast(`"${name}" added.`);
+            renderAdminProducts();
+            loadProducts().then(renderProductImageCards);
+          } else {
+            showToast("Failed: " + (data.error || "Unknown error"));
+          }
+        } catch (err) {
+          showToast("Network error.");
+        }
+      });
+
+      // Newsletter search
+      document.getElementById("nl-search")?.addEventListener("input", renderNewsletterTable);
+
+      // Auto-login: sessionStorage cache first, then verify with server
+      if (sessionStorage.getItem(SESSION_KEY) === "true") {
+        adminFetch("backend/admin-auth.php").then(({ data }) => {
+          if (data.authenticated) showDashboard();
+          else sessionStorage.removeItem(SESSION_KEY);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
