@@ -45,6 +45,6 @@ GenDimension/
 
 | Address | Person |
 |---|---|
-| hello@gendimension.co.za | General enquiries |
+| info@gendimension.co.za | General enquiries |
 | thatomathopa@gendimension.co.za | Thato Mathopa |
 | costachauke@gendimension.co.za | Vongani Costa Chauke |

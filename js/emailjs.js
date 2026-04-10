@@ -27,10 +27,10 @@ function initEmailJS() {
 }
 
 // ── Admin notification routing ──────────────────────────────────
-// Admin notifications → hello@gendimension.co.za
+// Admin notifications → info@gendimension.co.za
 // Thato → thatomathopa@gendimension.co.za
 // Vongani → costachauke@gendimension.co.za
-const ADMIN_NOTIFY_EMAIL = "hello@gendimension.co.za";
+const ADMIN_NOTIFY_EMAIL = "info@gendimension.co.za";
 
 // ── Order Confirmation ──────────────────────────────────────────
 // Template variables used:

@@ -25,7 +25,7 @@
 - [ ] Check backend/logs/payfast-itn.log for ITN confirmation
 
 ## Email
-- [ ] hello@gendimension.co.za working
+- [ ] info@gendimension.co.za working
 - [ ] thatomathopa@gendimension.co.za working
 - [ ] costachauke@gendimension.co.za working
 - [ ] Order notification emails sending correctly

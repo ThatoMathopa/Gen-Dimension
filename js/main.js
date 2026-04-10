@@ -667,8 +667,8 @@ const LEGAL_CONTENT = {
 <p><strong>Information we collect:</strong> When you place an order or contact us, we collect your name, email address, phone number, and delivery address. We also collect non-personal browsing data via cookies.</p>
 <p><strong>How we use your data:</strong> To process and deliver your order, communicate with you about your purchase, and improve our website. We do not sell your data to third parties.</p>
 <p><strong>Cookies:</strong> We use essential cookies to improve your experience. You may decline non-essential cookies via the cookie banner.</p>
-<p><strong>Your rights:</strong> You may request access to, correction of, or deletion of your personal data at any time by emailing hello@gendimension.co.za.</p>
-<p><strong>Contact:</strong> For any privacy concerns, email us at hello@gendimension.co.za.</p>`
+<p><strong>Your rights:</strong> You may request access to, correction of, or deletion of your personal data at any time by emailing info@gendimension.co.za.</p>
+<p><strong>Contact:</strong> For any privacy concerns, email us at info@gendimension.co.za.</p>`
   },
   terms: {
     title: "Terms of Service",
@@ -677,9 +677,9 @@ const LEGAL_CONTENT = {
 <p><strong>Orders:</strong> All orders are subject to availability. We reserve the right to cancel an order if an item becomes unavailable, in which case a full refund will be issued.</p>
 <p><strong>Pricing:</strong> All prices are listed in South African Rand (ZAR) and include VAT. Prices are subject to change without notice.</p>
 <p><strong>Delivery:</strong> We deliver across South Africa from Clayville, Gauteng. Delivery times and fees vary by location and will be confirmed at checkout.</p>
-<p><strong>Returns:</strong> If your item arrives damaged or defective, contact us within 7 days of delivery at hello@gendimension.co.za with photos. We will arrange a replacement or refund.</p>
+<p><strong>Returns:</strong> If your item arrives damaged or defective, contact us within 7 days of delivery at info@gendimension.co.za with photos. We will arrange a replacement or refund.</p>
 <p><strong>Limitation of liability:</strong> Gen Dimension is not liable for indirect or consequential losses arising from use of our products beyond the purchase price paid.</p>
-<p><strong>Contact:</strong> hello@gendimension.co.za | +27 79 879 6513</p>`
+<p><strong>Contact:</strong> info@gendimension.co.za | +27 79 879 6513</p>`
   }
 };
 

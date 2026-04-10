@@ -41,7 +41,7 @@ define('DB_CHARSET', 'utf8mb4');
 define('ADMIN_PASSWORD', 'GenDim@2025');
 
 // ── Site ──────────────────────────────────────────────────────────
-define('ADMIN_EMAIL',     'hello@gendimension.co.za');
+define('ADMIN_EMAIL',     'info@gendimension.co.za');
 define('WHATSAPP_NUMBER', '27798796513');
 define('SITE_URL',        'https://gendimension.co.za');
 
