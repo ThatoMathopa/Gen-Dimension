@@ -1,0 +1,65 @@
+{
+  "id": "https://gendimension.co.za/admin.html",
+  "name": "Gen Dimension Admin",
+  "short_name": "GD Admin",
+  "description": "Gen Dimension admin dashboard — manage orders, products and newsletter subscribers.",
+  "start_url": "/admin.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#1e1e1c",
+  "theme_color": "#1e1e1c",
+  "lang": "en-ZA",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "images/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Orders",
+      "short_name": "Orders",
+      "description": "View and manage customer orders",
+      "url": "/admin.html?tab=orders&source=pwa",
+      "icons": [{ "src": "images/favicon.png", "sizes": "64x64", "type": "image/png" }]
+    },
+    {
+      "name": "Add Product",
+      "short_name": "Add Product",
+      "description": "Add a new product to the catalogue",
+      "url": "/admin.html?tab=products&source=pwa",
+      "icons": [{ "src": "images/favicon.png", "sizes": "64x64", "type": "image/png" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
