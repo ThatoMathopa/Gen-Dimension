@@ -14,17 +14,6 @@ const PAYFAST_CONFIG = {
   sandbox:      true,
 };
 
-// ── Fee calculation ───────────────────────────────────────────────
-const PAYFAST_FEES = {
-  card: { rate: 0.029, fixed: 1, label: '2.9% + R1' },
-  eft:  { rate: 0.015, fixed: 1, label: '1.5% + R1' },
-};
-
-function calcFee(subtotal, method) {
-  const { rate, fixed } = PAYFAST_FEES[method] || PAYFAST_FEES.card;
-  return Math.round((subtotal * rate + fixed) * 100) / 100;
-}
-
 // ── Order Status ──────────────────────────────────────────────────
 const STATUS_FLOW = ['new', 'processing', 'done'];
 
@@ -160,9 +149,10 @@ function renderModalCartSummary() {
         </div>`).join('')}
       <div class="summary-divider"></div>
       <div class="summary-row summary-total-row">
-        <span>Subtotal</span>
+        <span>Order Total (VAT incl.)</span>
         <strong>R ${subtotal.toLocaleString('en-ZA')}</strong>
       </div>
+      <p class="fee-note">Price includes all fees. No hidden charges.</p>
     </div>`;
 }
 
@@ -225,15 +215,12 @@ function renderPaymentStep(data) {
     <h3 class="step-heading">Order Summary</h3>
     <div class="order-summary">
       ${itemsHTML}
-      <div class="summary-row summary-fee-row">
-        <span>PayFast fee</span>
-        <span id="summary-fee" class="summary-fee-val">Select a method below</span>
-      </div>
       <div class="summary-divider"></div>
       <div class="summary-row summary-total-row">
-        <span>Total</span>
+        <span>Order Total (VAT incl.)</span>
         <strong id="summary-total">R ${data.subtotal.toLocaleString('en-ZA')}</strong>
       </div>
+      <p class="fee-note">Price includes all fees. No hidden charges.</p>
     </div>
 
     <h3 class="step-heading">Payment Method</h3>
@@ -246,7 +233,7 @@ function renderPaymentStep(data) {
           </div>
           <div class="pm-info">
             <strong>Card / SnapScan</strong>
-            <span>via PayFast &middot; 2.9% + R1 fee</span>
+            <span>Secured by PayFast</span>
           </div>
         </div>
         <span class="pm-check">&#10003;</span>
@@ -260,7 +247,7 @@ function renderPaymentStep(data) {
           </div>
           <div class="pm-info">
             <strong>EFT / Instant EFT</strong>
-            <span>via PayFast &middot; 1.5% + R1 fee</span>
+            <span>Secured by PayFast</span>
           </div>
         </div>
         <span class="pm-check">&#10003;</span>
@@ -291,13 +278,6 @@ function selectPaymentMethod(method) {
     c.classList.toggle('selected', c.dataset.method === method)
   );
 
-  const subtotal = _pendingOrderData.subtotal;
-  const fee      = calcFee(subtotal, method);
-  const total    = subtotal + fee;
-
-  document.getElementById('summary-fee').textContent   = `R ${fee.toFixed(2)}`;
-  document.getElementById('summary-total').textContent = `R ${total.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
-
   toggleProceedBtn();
 }
 
@@ -314,8 +294,7 @@ function goToStep1() {
 function proceedToPayment() {
   if (!_selectedPaymentMethod || !_pendingOrderData) return;
 
-  const fee   = calcFee(_pendingOrderData.subtotal, _selectedPaymentMethod);
-  const total = Math.round((_pendingOrderData.subtotal + fee) * 100) / 100;
+  const total = _pendingOrderData.subtotal;
 
   const orderData = {
     customer: {

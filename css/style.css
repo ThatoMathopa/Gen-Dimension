@@ -2109,8 +2109,13 @@ input, textarea, select {
   padding: 0.28rem 0;
 }
 
-.summary-fee-row { color: var(--muted); }
-.summary-fee-val { font-style: italic; }
+.fee-note {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+  margin-top: 0.4rem;
+  text-align: right;
+}
 
 .summary-divider {
   border-top: 1px solid var(--border);

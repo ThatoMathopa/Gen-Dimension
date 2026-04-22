@@ -73,7 +73,7 @@ function renderCartSidebar() {
 
   if (cart.length === 0) {
     body.innerHTML   = `<p class="cart-empty">Your cart is empty.</p>`;
-    footer.innerHTML = `<div class="cart-totals"><span>Subtotal</span><strong>R 0</strong></div><button class="btn btn-full" disabled>Checkout</button>`;
+    footer.innerHTML = `<div class="cart-totals"><span>Order Total (VAT incl.)</span><strong>R 0</strong></div><button class="btn btn-full" disabled>Checkout</button>`;
     return;
   }
 
@@ -94,16 +94,38 @@ function renderCartSidebar() {
 
   footer.innerHTML = `
     <div class="cart-totals">
-      <span>Subtotal (${getCartCount()} item${getCartCount() !== 1 ? "s" : ""})</span>
+      <span>Order Total (${getCartCount()} item${getCartCount() !== 1 ? "s" : ""})</span>
       <strong>R ${subtotal.toLocaleString("en-ZA")}</strong>
     </div>
+    <p class="fee-note" style="text-align:center;">Price includes all fees. No hidden charges.</p>
+    <div id="moretyme-cart" class="moretyme-wrap"></div>
     <button class="btn btn-full" onclick="cartCheckout()">Checkout &#8594;</button>`;
+
+  loadMoreTyme(subtotal, "moretyme-cart");
 }
 function cartUpdateQty(productId, delta) { updateQty(productId, delta); renderCartSidebar(); }
 function cartRemoveItem(productId)       { removeFromCart(productId);   renderCartSidebar(); }
 function cartCheckout() {
   closeCartSidebar();
   if (typeof openCartCheckout === "function") openCartCheckout();
+}
+
+// ── MoreTyme Widget ────────────────────────────────────────────
+function loadMoreTyme(amount, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Remove any previously injected MoreTyme scripts
+  document.querySelectorAll("script[data-moretyme]").forEach(s => s.remove());
+
+  // Clear container so the widget re-renders fresh
+  container.innerHTML = "";
+
+  const script = document.createElement("script");
+  script.src = "https://content.payfast.io/widgets/moretyme/widget.min.js?amount=" + Math.round(amount);
+  script.async = true;
+  script.setAttribute("data-moretyme", containerId);
+  container.appendChild(script);
 }
 
 // ── Quick View ─────────────────────────────────────────────────
@@ -123,6 +145,8 @@ function openQuickView(productId) {
   document.getElementById("qv-name").textContent      = product.name;
   document.getElementById("qv-price").textContent     = `R\u00a0${product.price.toLocaleString("en-ZA")}`;
   document.getElementById("qv-qty-val").textContent   = "1";
+
+  loadMoreTyme(product.price, "moretyme-qv");
 
   // Reset swatches & qty
   document.querySelectorAll(".qv-swatch").forEach((s, i) => s.classList.toggle("active", i === 0));
@@ -579,6 +603,204 @@ async function handleAddProduct(e) {
   }
 }
 
+// ── PayFast Checkout ───────────────────────────────────────────
+const PAYFAST_MERCHANT_ID  = "34464777";
+const PAYFAST_MERCHANT_KEY = "dlafzyubih35x";
+const PAYFAST_URL          = "https://www.payfast.co.za/eng/process";
+
+function openCartCheckout() {
+  const cart = getCart();
+  if (!cart.length) return;
+
+  // Populate cart summary in modal
+  const summary = document.getElementById("modal-cart-summary");
+  if (summary) {
+    summary.innerHTML = `
+      <div class="order-summary-box">
+        <div class="order-summary-title">Order Summary</div>
+        ${cart.map(i => `
+          <div class="order-summary-row">
+            <span>${i.name} &times; ${i.qty}</span>
+            <span>R&nbsp;${(i.price * i.qty).toLocaleString("en-ZA")}</span>
+          </div>`).join("")}
+        <div class="order-summary-total">
+          <span>Order Total (VAT incl.)</span>
+          <strong>R&nbsp;${getCartSubtotal().toLocaleString("en-ZA")}</strong>
+        </div>
+        <p class="fee-note" style="text-align:center;">Price includes all fees. No hidden charges.</p>
+      </div>`;
+  }
+
+  // Show step 1
+  document.getElementById("modal-step-1").style.display  = "";
+  document.getElementById("modal-step-2").style.display  = "none";
+  document.getElementById("step-dot-1").classList.add("active");
+  document.getElementById("step-dot-2").classList.remove("active");
+
+  const modal = document.getElementById("order-modal");
+  if (modal) {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeOrderModal() {
+  const modal = document.getElementById("order-modal");
+  if (modal) { modal.classList.remove("active"); document.body.style.overflow = ""; }
+}
+
+function buildPayFastForm(orderId, amount, customer) {
+  const returnUrl = `${location.origin}/?payment=success&order_id=${encodeURIComponent(orderId)}`;
+  const cancelUrl = `${location.origin}/?payment=cancel&order_id=${encodeURIComponent(orderId)}`;
+  const notifyUrl = `${location.origin}/backend/payfast-notify.php`;
+
+  const nameParts  = customer.name.trim().split(" ");
+  const firstName  = nameParts[0] || customer.name;
+  const lastName   = nameParts.slice(1).join(" ") || "-";
+
+  const cart       = getCart();
+  const itemDesc   = cart.map(i => `${i.name} x${i.qty}`).join(", ").substring(0, 255);
+
+  const fields = {
+    merchant_id:    PAYFAST_MERCHANT_ID,
+    merchant_key:   PAYFAST_MERCHANT_KEY,
+    return_url:     returnUrl,
+    cancel_url:     cancelUrl,
+    notify_url:     notifyUrl,
+    name_first:     firstName,
+    name_last:      lastName,
+    email_address:  customer.email,
+    m_payment_id:   orderId,
+    amount:         parseFloat(amount).toFixed(2),
+    item_name:      `Gen Dimension Order ${orderId}`,
+    item_description: itemDesc,
+  };
+
+  const form = document.createElement("form");
+  form.method  = "POST";
+  form.action  = PAYFAST_URL;
+  form.style.display = "none";
+
+  Object.entries(fields).forEach(([key, val]) => {
+    const input   = document.createElement("input");
+    input.type    = "hidden";
+    input.name    = key;
+    input.value   = val;
+    form.appendChild(input);
+  });
+
+  return form;
+}
+
+async function submitOrderAndPay(e) {
+  e.preventDefault();
+  const form     = document.getElementById("order-form");
+  const btn      = form?.querySelector('[type="submit"]');
+  const cart     = getCart();
+  const subtotal = getCartSubtotal();
+
+  if (!cart.length) { alert("Your cart is empty."); return; }
+
+  const name    = form["order-name"].value.trim();
+  const email   = form["order-email"].value.trim();
+  const phone   = form["order-phone"].value.trim();
+  const address = form["order-address"].value.trim();
+  const notes   = form["order-notes"].value.trim();
+
+  if (!name || !email || !phone || !address) {
+    alert("Please fill in all required fields."); return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Please enter a valid email address."); return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = "Processing…"; }
+
+  try {
+    const { ok, data } = await gdFetch("backend/orders.php", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        customer: { name, email, phone, address, notes },
+        items:    cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+        total:    subtotal,
+        paymentMethod: "payfast",
+      }),
+    });
+
+    if (!ok || !data.orderId) {
+      alert("Could not place order: " + (data.error || "Unknown error."));
+      if (btn) { btn.disabled = false; btn.textContent = "Continue to Payment →"; }
+      return;
+    }
+
+    const orderId = data.orderId;
+
+    // Show step 2 — payment confirmation
+    document.getElementById("modal-step-1").style.display = "none";
+    document.getElementById("modal-step-2").style.display = "";
+    document.getElementById("step-dot-1").classList.remove("active");
+    document.getElementById("step-dot-2").classList.add("active");
+
+    document.getElementById("modal-step-2").innerHTML = `
+      <div style="text-align:center;padding:1.5rem 0;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">🔒</div>
+        <h3 style="margin-bottom:0.4rem;">Order ${orderId} created</h3>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;">
+          Order Total: <strong>R&nbsp;${subtotal.toLocaleString("en-ZA")}</strong><br>
+          You will be redirected to PayFast to complete payment securely.
+        </p>
+        <button id="pay-now-btn" class="btn btn-full" style="max-width:320px;">
+          Pay Now — R&nbsp;${subtotal.toLocaleString("en-ZA")} &#8594;
+        </button>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;">
+          Secured by <strong>PayFast</strong> — card, EFT, MoreTyme &amp; more
+        </p>
+      </div>`;
+
+    clearCart();
+    updateCartBadge();
+
+    document.getElementById("pay-now-btn").addEventListener("click", () => {
+      const pfForm = buildPayFastForm(orderId, subtotal, { name, email });
+      document.body.appendChild(pfForm);
+      pfForm.submit();
+    });
+
+  } catch (err) {
+    console.error("[Checkout] Error:", err);
+    alert("Network error. Please try again or WhatsApp us: +27 79 879 6513");
+    if (btn) { btn.disabled = false; btn.textContent = "Continue to Payment →"; }
+  }
+}
+
+function initPaymentReturnBanners() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get("payment");
+  if (!status) return;
+
+  if (status === "success") {
+    const orderId = params.get("order_id") || "";
+    const el      = document.getElementById("payment-success-banner");
+    const msg     = document.getElementById("payment-success-msg");
+    if (el && msg) {
+      msg.textContent = `Payment received! Your order ${orderId} is confirmed. Check your email for details.`;
+      el.style.display = "flex";
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    history.replaceState({}, "", location.pathname);
+  }
+
+  if (status === "cancel") {
+    const el = document.getElementById("payment-cancel-banner");
+    if (el) {
+      el.style.display = "flex";
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    history.replaceState({}, "", location.pathname);
+  }
+}
+
 // ── Contact Form ───────────────────────────────────────────────
 async function submitContact() {
   const form    = document.getElementById("contact-form");
@@ -710,7 +932,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Global Escape key
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { closeQuickView(); closeCartSidebar(); closeLegalModal(); }
+    if (e.key === "Escape") { closeQuickView(); closeCartSidebar(); closeLegalModal(); closeOrderModal(); }
   });
 
   // Hamburger
@@ -744,6 +966,14 @@ document.addEventListener("DOMContentLoaded", () => {
   initNewsletter();
   initContactForm();
   initFooter();
+  initPaymentReturnBanners();
+
+  // Order modal
+  document.getElementById("order-form")?.addEventListener("submit", submitOrderAndPay);
+  document.getElementById("modal-close")?.addEventListener("click", closeOrderModal);
+  document.getElementById("order-modal")?.addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeOrderModal();
+  });
 
   // Legal modal backdrop click
   document.getElementById("legal-modal")?.addEventListener("click", e => {
