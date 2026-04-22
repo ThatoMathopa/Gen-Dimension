@@ -268,6 +268,13 @@ function renderPaymentStep(data) {
 
     </div>
 
+    <div class="terms-agree">
+      <label class="terms-agree-label">
+        <input type="checkbox" id="terms-checkbox" onchange="toggleProceedBtn()" />
+        I agree to the <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>
+      </label>
+    </div>
+
     <div class="payment-actions">
       <button type="button" class="btn btn-outline" onclick="goToStep1()">&#8592; Back</button>
       <button type="button" class="btn btn-full" id="proceed-btn" onclick="proceedToPayment()" disabled>
@@ -291,8 +298,13 @@ function selectPaymentMethod(method) {
   document.getElementById('summary-fee').textContent   = `R ${fee.toFixed(2)}`;
   document.getElementById('summary-total').textContent = `R ${total.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
+  toggleProceedBtn();
+}
+
+function toggleProceedBtn() {
+  const checked = document.getElementById('terms-checkbox')?.checked;
   const btn = document.getElementById('proceed-btn');
-  if (btn) btn.disabled = false;
+  if (btn) btn.disabled = !(_selectedPaymentMethod && checked);
 }
 
 function goToStep1() {
