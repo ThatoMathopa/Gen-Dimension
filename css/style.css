@@ -2204,6 +2204,64 @@ input, textarea, select {
   transition: opacity var(--duration);
 }
 
+/* ─── Province / Delivery ────────────────────────────────────── */
+.courier-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #EDE4D8;
+  border-left: 3px solid #8B6F47;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: #5a3e28;
+  line-height: 1.55;
+}
+.courier-info-box p { margin: 0; }
+
+.card-delivery-note {
+  font-size: 10px;
+  color: var(--muted);
+  margin: -0.25rem 0 0.4rem;
+  letter-spacing: 0.01em;
+}
+
+.cart-delivery-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding: 0.2rem 0;
+}
+
+.confirm-breakdown {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  margin: 0.5rem auto 0;
+  max-width: 320px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  color: var(--text-soft);
+}
+.confirm-total { font-size: 1rem; font-weight: 600; color: var(--text); }
+.confirm-divider {
+  border-top: 1px solid var(--border);
+  margin: 0.4rem 0;
+}
+.confirm-courier {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+  text-align: center;
+}
+
 /* ─── Step 2: Actions ────────────────────────────────────────── */
 .terms-agree {
   margin: 0.75rem 0 0.25rem;

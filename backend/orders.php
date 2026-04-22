@@ -91,15 +91,18 @@ if ($method === 'POST') {
 
     if (!$data) jsonError('Invalid JSON body');
 
-    $customer = $data['customer'] ?? [];
-    $name     = trim($customer['name']    ?? '');
-    $email    = trim($customer['email']   ?? '');
-    $phone    = trim($customer['phone']   ?? '');
-    $address  = trim($customer['address'] ?? '');
-    $notes    = trim($customer['notes']   ?? '');
-    $items    = $data['items']            ?? [];
-    $total    = (float)($data['total']    ?? 0);
-    $method_p = trim($data['paymentMethod'] ?? 'pending');
+    $customer        = $data['customer'] ?? [];
+    $name            = trim($customer['name']    ?? '');
+    $email           = trim($customer['email']   ?? '');
+    $phone           = trim($customer['phone']   ?? '');
+    $address         = trim($customer['address'] ?? '');
+    $notes           = trim($customer['notes']   ?? '');
+    $items           = $data['items']            ?? [];
+    $total           = (float)($data['total']            ?? 0);
+    $productSubtotal = (float)($data['productSubtotal']  ?? $total);
+    $deliveryFee     = (float)($data['deliveryFee']       ?? 150);
+    $deliveryProvince= trim($data['deliveryProvince']     ?? 'Gauteng');
+    $method_p        = trim($data['paymentMethod']        ?? 'pending');
 
     if (!$name || !$email || !$phone || !$address) {
         jsonError('Missing required fields: name, email, phone, address');
@@ -129,8 +132,9 @@ if ($method === 'POST') {
         "INSERT INTO orders
          (id, customer_name, customer_email, customer_phone,
           delivery_address, items, total, notes,
-          payment_method, payment_status, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', 'new')"
+          payment_method, payment_status, status,
+          delivery_province, delivery_fee)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', 'new', ?, ?)"
     );
     $stmt->execute([
         $orderId,
@@ -142,6 +146,8 @@ if ($method === 'POST') {
         $total,
         $notes,
         $method_p,
+        $deliveryProvince,
+        $deliveryFee,
     ]);
 
     // Build item summary for emails
@@ -157,7 +163,10 @@ if ($method === 'POST') {
         . "Address: {$address}\n"
         . "Notes: {$notes}\n\n"
         . "Items:\n{$itemStr}\n\n"
-        . "Total: R" . number_format($total, 2) . "\n"
+        . "Delivery Province: {$deliveryProvince}\n"
+        . "Delivery Fee: R" . number_format($deliveryFee, 2) . "\n"
+        . "Products Total: R" . number_format($productSubtotal, 2) . "\n"
+        . "Grand Total: R" . number_format($total, 2) . "\n"
         . "Payment Method: {$method_p}\n"
         . "Date: " . date('Y-m-d H:i:s') . "\n\n"
         . "View admin: " . SITE_URL . "/admin.html";
@@ -165,11 +174,19 @@ if ($method === 'POST') {
     sendMail(ADMIN_EMAIL, "New Order {$orderId} — Gen Dimension", $adminBody);
 
     // Customer confirmation email
+    $courierNote = ($deliveryProvince !== 'Gauteng')
+        ? "We use The Courier Guy for deliveries outside Gauteng.\nTracking details will be sent once your order is dispatched.\n"
+        : "";
+
     $custBody = "Thank you for your order, {$name}!\n\n"
         . "Order ID: {$orderId}\n\n"
         . "Items:\n{$itemStr}\n\n"
-        . "Total: R" . number_format($total, 2) . "\n"
+        . "Products Total: R" . number_format($productSubtotal, 2) . "\n"
+        . "Delivery to: {$deliveryProvince}\n"
+        . "Delivery fee: R" . number_format($deliveryFee, 2) . "\n"
+        . "Grand Total: R" . number_format($total, 2) . "\n\n"
         . "Delivery Address: {$address}\n\n"
+        . $courierNote
         . "We will contact you within 24 hours to confirm delivery details.\n"
         . "For faster response, WhatsApp us: https://wa.me/" . WHATSAPP_NUMBER . "\n\n"
         . "Gen Dimension Team\n"

@@ -93,7 +93,8 @@ if ($action === 'export-orders') {
     fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
 
     fputcsv($out, [
-        'Order ID', 'Name', 'Email', 'Phone', 'Items', 'Total',
+        'Order ID', 'Name', 'Email', 'Phone', 'Items',
+        'Products Total', 'Delivery Province', 'Delivery Fee', 'Grand Total',
         'Address', 'Notes', 'Payment Method', 'Payment Status', 'Status', 'Date',
     ]);
 
@@ -105,13 +106,20 @@ if ($action === 'export-orders') {
             $items
         ));
 
+        $grandTotal    = (float)($row['total']        ?? 0);
+        $deliveryFee   = (float)($row['delivery_fee'] ?? 0);
+        $productsTotal = $grandTotal - $deliveryFee;
+
         fputcsv($out, [
             $row['id'],
             $row['customer_name'],
             $row['customer_email'],
             $row['customer_phone'],
             $itemStr,
-            number_format($row['total'], 2),
+            number_format($productsTotal, 2),
+            $row['delivery_province'] ?? 'Gauteng',
+            number_format($deliveryFee, 2),
+            number_format($grandTotal, 2),
             $row['delivery_address'],
             $row['notes'],
             $row['payment_method'],

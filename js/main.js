@@ -4,6 +4,28 @@
 
 let products = [];
 
+// ── Delivery fees by province ──────────────────────────────────
+const DELIVERY_FEES = {
+  'Gauteng':       150,
+  'Western Cape':  450,
+  'Eastern Cape':  450,
+  'KwaZulu-Natal': 400,
+  'Limpopo':       350,
+  'Mpumalanga':    350,
+  'North West':    350,
+  'Free State':    350,
+  'Northern Cape': 500,
+};
+
+function getDeliveryFee(province) {
+  return DELIVERY_FEES[province] ?? 150;
+}
+
+function onProvinceChange(select) {
+  const box = document.getElementById('courier-info-box');
+  if (box) box.style.display = (select.value && select.value !== 'Gauteng') ? 'flex' : 'none';
+}
+
 async function loadProducts() {
   try {
     const { ok, data } = await gdFetch("backend/products.php");
@@ -87,10 +109,14 @@ function renderCartSidebar() {
 
   footer.innerHTML = `
     <div class="cart-totals">
-      <span>Order Total (${getCartCount()} item${getCartCount() !== 1 ? "s" : ""})</span>
+      <span>Products (${getCartCount()} item${getCartCount() !== 1 ? "s" : ""})</span>
       <strong>R ${subtotal.toLocaleString("en-ZA")}</strong>
     </div>
-    <p class="fee-note" style="text-align:center;">Price includes all fees. No hidden charges.</p>
+    <div class="cart-delivery-row">
+      <span>Delivery</span>
+      <span>From R150 (Gauteng)</span>
+    </div>
+    <p class="fee-note" style="text-align:center;">Exact delivery fee selected at checkout</p>
     <div id="moretyme-cart" class="moretyme-wrap"></div>
     <button class="btn btn-full" onclick="cartCheckout()">Checkout &#8594;</button>`;
 
@@ -486,6 +512,7 @@ function renderProducts() {
         <div class="card-body">
           <h3>${p.name}</h3>
           <p class="price">R\u00a0${p.price.toLocaleString("en-ZA")}</p>
+          <p class="card-delivery-note">Delivery info at checkout</p>
           <p>${p.description}</p>
           <button class="btn btn-add-cart" onclick="addToCartFromCard(${p.id})">Add to Cart</button>
         </div>
@@ -659,11 +686,15 @@ function openCartCheckout() {
             <span>${i.name} &times; ${i.qty}</span>
             <span>R&nbsp;${(i.price * i.qty).toLocaleString("en-ZA")}</span>
           </div>`).join("")}
-        <div class="order-summary-total">
-          <span>Order Total (VAT incl.)</span>
-          <strong>R&nbsp;${getCartSubtotal().toLocaleString("en-ZA")}</strong>
+        <div class="order-summary-row order-delivery-row">
+          <span>Delivery</span>
+          <span>Selected below</span>
         </div>
-        <p class="fee-note" style="text-align:center;">Price includes all fees. No hidden charges.</p>
+        <div class="order-summary-total">
+          <span>Total (incl. delivery)</span>
+          <strong id="modal-summary-total">R&nbsp;${getCartSubtotal().toLocaleString("en-ZA")}</strong>
+        </div>
+        <p class="fee-note" style="text-align:center;">Final total shown after selecting province</p>
       </div>`;
   }
 
@@ -685,7 +716,7 @@ function closeOrderModal() {
   if (modal) { modal.classList.remove("active"); document.body.style.overflow = ""; }
 }
 
-function buildPayFastForm(orderId, amount, customer) {
+function buildPayFastForm(orderId, amount, customer, province) {
   const returnUrl = `${location.origin}/?payment=success&order_id=${encodeURIComponent(orderId)}`;
   const cancelUrl = `${location.origin}/?payment=cancel&order_id=${encodeURIComponent(orderId)}`;
   const notifyUrl = `${location.origin}/backend/payfast-notify.php`;
@@ -708,7 +739,7 @@ function buildPayFastForm(orderId, amount, customer) {
     email_address:  customer.email,
     m_payment_id:   orderId,
     amount:         parseFloat(amount).toFixed(2),
-    item_name:      `Gen Dimension Order ${orderId}`,
+    item_name:      `Gen Dimension Order + Delivery`,
     item_description: itemDesc,
   };
 
@@ -730,25 +761,32 @@ function buildPayFastForm(orderId, amount, customer) {
 
 async function submitOrderAndPay(e) {
   e.preventDefault();
-  const form     = document.getElementById("order-form");
-  const btn      = form?.querySelector('[type="submit"]');
-  const cart     = getCart();
-  const subtotal = getCartSubtotal();
+  const form        = document.getElementById("order-form");
+  const btn         = form?.querySelector('[type="submit"]');
+  const cart        = getCart();
+  const productTotal = getCartSubtotal();
 
   if (!cart.length) { alert("Your cart is empty."); return; }
 
-  const name    = form["order-name"].value.trim();
-  const email   = form["order-email"].value.trim();
-  const phone   = form["order-phone"].value.trim();
-  const address = form["order-address"].value.trim();
-  const notes   = form["order-notes"].value.trim();
+  const name     = form["order-name"].value.trim();
+  const email    = form["order-email"].value.trim();
+  const phone    = form["order-phone"].value.trim();
+  const address  = form["order-address"].value.trim();
+  const province = form["order-province"]?.value || "";
+  const notes    = form["order-notes"].value.trim();
 
   if (!name || !email || !phone || !address) {
     alert("Please fill in all required fields."); return;
   }
+  if (!province) {
+    alert("Please select your delivery province."); return;
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     alert("Please enter a valid email address."); return;
   }
+
+  const deliveryFee = getDeliveryFee(province);
+  const grandTotal  = productTotal + deliveryFee;
 
   if (btn) { btn.disabled = true; btn.textContent = "Processing…"; }
 
@@ -759,8 +797,11 @@ async function submitOrderAndPay(e) {
       body:    JSON.stringify({
         customer: { name, email, phone, address, notes },
         items:    cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
-        total:    subtotal,
-        paymentMethod: "payfast",
+        total:           grandTotal,
+        productSubtotal: productTotal,
+        deliveryFee:     deliveryFee,
+        deliveryProvince: province,
+        paymentMethod:   "payfast",
       }),
     });
 
@@ -778,16 +819,20 @@ async function submitOrderAndPay(e) {
     document.getElementById("step-dot-1").classList.remove("active");
     document.getElementById("step-dot-2").classList.add("active");
 
+    const isOutside = province !== "Gauteng";
     document.getElementById("modal-step-2").innerHTML = `
       <div style="text-align:center;padding:1.5rem 0;">
         <div style="font-size:2rem;margin-bottom:0.5rem;">🔒</div>
-        <h3 style="margin-bottom:0.4rem;">Order ${orderId} created</h3>
-        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;">
-          Order Total: <strong>R&nbsp;${subtotal.toLocaleString("en-ZA")}</strong><br>
-          You will be redirected to PayFast to complete payment securely.
-        </p>
-        <button id="pay-now-btn" class="btn btn-full" style="max-width:320px;">
-          Pay Now — R&nbsp;${subtotal.toLocaleString("en-ZA")} &#8594;
+        <h3 style="margin-bottom:0.75rem;">Order ${orderId} confirmed</h3>
+        <div class="confirm-breakdown">
+          <div class="confirm-row"><span>Products</span><span>R&nbsp;${productTotal.toLocaleString("en-ZA")}</span></div>
+          <div class="confirm-row"><span>Delivery (${province})</span><span>R&nbsp;${deliveryFee.toLocaleString("en-ZA")}</span></div>
+          <div class="confirm-divider"></div>
+          <div class="confirm-row confirm-total"><span>Total</span><strong>R&nbsp;${grandTotal.toLocaleString("en-ZA")}</strong></div>
+          ${isOutside ? `<p class="confirm-courier">Shipped via The Courier Guy · tracking sent by email &amp; WhatsApp</p>` : ""}
+        </div>
+        <button id="pay-now-btn" class="btn btn-full" style="max-width:320px;margin-top:1.25rem;">
+          Pay R&nbsp;${grandTotal.toLocaleString("en-ZA")} via PayFast &#8594;
         </button>
         <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;">
           Secured by <strong>PayFast</strong> — card, EFT, MoreTyme &amp; more
@@ -798,7 +843,7 @@ async function submitOrderAndPay(e) {
     updateCartBadge();
 
     document.getElementById("pay-now-btn").addEventListener("click", () => {
-      const pfForm = buildPayFastForm(orderId, subtotal, { name, email });
+      const pfForm = buildPayFastForm(orderId, grandTotal, { name, email }, province);
       document.body.appendChild(pfForm);
       pfForm.submit();
     });

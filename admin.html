@@ -577,6 +577,7 @@
 
       .admin-header .nav-right { gap: 0.5rem; }
       .admin-header .nav-right span { display: none; }
+      .install-btn-label { display: none; }
       .admin-header .nav-right .btn { font-size: 0.8rem; padding: 0.4rem 0.85rem; }
 
       .orders-panel-header { padding: 1rem 1.1rem; }
@@ -619,6 +620,10 @@
         <div class="logo">Gen Dimension &mdash; Admin</div>
         <div class="nav-right">
           <span id="admin-greeting"></span>
+          <button id="install-app-btn" class="btn" style="font-size:0.85rem;padding:0.4rem 0.85rem;background:#2a2a28;border:1px solid rgba(201,168,76,0.35);display:flex;align-items:center;gap:0.4rem;" title="Install Admin App">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="install-btn-label">Install App</span>
+          </button>
           <a href="index.html" class="btn" style="font-size:0.85rem;padding:0.4rem 1rem;">View Site</a>
           <button class="btn" id="logout-btn" style="font-size:0.85rem;padding:0.4rem 1rem;background:#444;">Logout</button>
         </div>
@@ -962,6 +967,8 @@
               <td>${qtyCell}</td>
               <td style="max-width:160px;white-space:normal">${escapeAdminHtml(o.delivery_address)}</td>
               <td>${escapeAdminHtml(o.customer_phone)}</td>
+              <td style="white-space:nowrap">${escapeAdminHtml(o.delivery_province || 'Gauteng')}</td>
+              <td style="white-space:nowrap">R&nbsp;${parseFloat(o.delivery_fee || 150).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}</td>
               <td style="white-space:nowrap">${totalFormatted}</td>
               <td style="white-space:nowrap">${escapeAdminHtml(o.created_at || "")}</td>
               <td><span class="${statusCls}">${statusLabel}</span></td>
@@ -979,7 +986,7 @@
           <table>
             <thead><tr>
               <th>Order ID</th><th>Customer</th><th>Product</th><th>Qty</th>
-              <th>Address</th><th>Phone</th><th>Total</th><th>Date</th>
+              <th>Address</th><th>Phone</th><th>Province</th><th>Delivery</th><th>Total</th><th>Date</th>
               <th>Status</th><th>Payment</th><th>Actions</th>
             </tr></thead>
             <tbody>${rows}</tbody>
@@ -1198,6 +1205,9 @@
       }
     }
 
+    // ── Global PWA install prompt reference ──────────────────────
+    var _installPrompt = null;
+
     // ── DOMContentLoaded boot ────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
 
@@ -1372,7 +1382,6 @@
       }
 
       // ── PWA Install Prompt ───────────────────────────────────────
-      let _installPrompt = null;
       window.addEventListener("beforeinstallprompt", e => {
         e.preventDefault();
         _installPrompt = e;
@@ -1401,6 +1410,13 @@
         navigator.serviceWorker.register("/admin-sw.js").catch(() => {});
       }
     });
+
+    // ── Next status helper ───────────────────────────────────────
+    function getNextStatus(status) {
+      const flow = ["new", "processing", "done"];
+      const idx  = flow.indexOf(status);
+      return (idx !== -1 && idx < flow.length - 1) ? flow[idx + 1] : null;
+    }
 
     // ── Mobile order cards renderer ──────────────────────────────
     // Called after renderOrders() to also populate the card view
@@ -1437,13 +1453,112 @@
             <div class="order-card-row"><span>Date</span><span>${escapeAdminHtml(o.created_at ? new Date(o.created_at).toLocaleDateString("en-ZA") : "—")}</span></div>
             <div class="order-card-actions">
               ${nextStatus
-                ? `<button class="btn-advance" onclick="advanceOrderStatus(${o.id}, '${nextStatus}')">→ ${nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1)}</button>`
+                ? `<button class="btn-advance" onclick="advanceOrderStatus('${o.id}', '${nextStatus}')">→ ${nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1)}</button>`
                 : `<span class="done-tick">✓ Completed</span>`}
-              <button class="btn-delete" onclick="deleteOrder(${o.id})">Delete</button>
+              <button class="btn-delete" onclick="deleteOrder('${o.id}')">Delete</button>
             </div>
           </div>`;
       }).join("");
     }
+  </script>
+
+  <!-- ── Install Instructions Modal (iOS / fallback) ── -->
+  <div id="install-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;">
+    <div style="background:#1e1e1c;border-radius:16px;max-width:380px;width:100%;padding:2rem;border:1px solid rgba(201,168,76,0.25);position:relative;">
+      <button onclick="document.getElementById('install-modal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
+      <div style="color:var(--accent);font-size:1.3rem;font-weight:700;margin-bottom:0.35rem;">Install Admin App</div>
+      <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:1.5rem;">Add this dashboard to your home screen for instant access.</p>
+
+      <div id="install-steps-android" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">1</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Tap the <strong style="color:#fff;">three-dot menu &#8942;</strong> in Chrome</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">2</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Tap <strong style="color:#fff;">Add to Home screen</strong></span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">3</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Tap <strong style="color:#fff;">Install</strong> &mdash; the GD Admin icon appears on your home screen</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="install-steps-ios" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">1</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Tap the <strong style="color:#fff;">Share button &#9650;</strong> at the bottom of Safari</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">2</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Scroll down and tap <strong style="color:#fff;">Add to Home Screen</strong></span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="background:var(--accent);color:#1e1e1c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">3</span>
+            <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Tap <strong style="color:#fff;">Add</strong> &mdash; the GD Admin icon appears on your home screen</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="install-modal-action-btn" style="display:none;width:100%;margin-top:1.5rem;padding:0.75rem;background:var(--accent);color:#1e1e1c;border:none;border-radius:8px;font-weight:700;font-size:0.95rem;cursor:pointer;touch-action:manipulation;">Install Now</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Install App button logic ──────────────────────────────────
+    document.getElementById("install-app-btn")?.addEventListener("click", () => {
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const modal = document.getElementById("install-modal");
+
+      if (_installPrompt) {
+        // Android Chrome: native install prompt available
+        _installPrompt.prompt();
+        _installPrompt.userChoice.then(({ outcome }) => {
+          if (outcome === "accepted") {
+            document.getElementById("install-banner").classList.remove("show");
+          }
+          _installPrompt = null;
+        });
+        return;
+      }
+
+      // Show modal with OS-specific instructions
+      modal.style.display = "flex";
+      document.getElementById("install-steps-ios").style.display     = isIOS ? "block" : "none";
+      document.getElementById("install-steps-android").style.display = isIOS ? "none"  : "block";
+
+      const actionBtn = document.getElementById("install-modal-action-btn");
+      // Only show "Install Now" button if prompt is available (will be set if fired again)
+      actionBtn.style.display = "none";
+    });
+
+    document.getElementById("install-modal-action-btn")?.addEventListener("click", async () => {
+      if (!_installPrompt) return;
+      _installPrompt.prompt();
+      const { outcome } = await _installPrompt.userChoice;
+      if (outcome === "accepted") {
+        document.getElementById("install-modal").style.display = "none";
+        document.getElementById("install-banner").classList.remove("show");
+      }
+      _installPrompt = null;
+    });
+
+    // Close modal on backdrop click
+    document.getElementById("install-modal")?.addEventListener("click", e => {
+      if (e.target === document.getElementById("install-modal")) {
+        e.target.style.display = "none";
+      }
+    });
+
+    // Re-show Install Now button if prompt fires while modal is open
+    window.addEventListener("appinstalled", () => {
+      document.getElementById("install-modal").style.display = "none";
+      document.getElementById("install-banner").classList.remove("show");
+      document.getElementById("install-app-btn").style.display = "none";
+    });
   </script>
 </body>
 </html>
