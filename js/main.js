@@ -23,15 +23,8 @@ async function loadProducts() {
 }
 
 // ── Product Image Storage ──────────────────────────────────────
-function getProductImage(productId) {
-  return localStorage.getItem(`gd_img_${productId}`) || null;
-}
-function saveProductImage(productId, base64) {
-  localStorage.setItem(`gd_img_${productId}`, base64);
-}
-function removeProductImage(productId) {
-  localStorage.removeItem(`gd_img_${productId}`);
-}
+// Images are stored on the server (images/products/) and persisted
+// in the products DB. localStorage is no longer used for images.
 
 // ── Cart helpers ───────────────────────────────────────────────
 function addToCartFromCard(productId) {
@@ -139,7 +132,7 @@ function openQuickView(productId) {
   _qvProduct = product;
   _qvQty     = 1;
 
-  const imgSrc = getProductImage(product.id) || product.image;
+  const imgSrc = product.image;
   document.getElementById("qv-image-block").innerHTML = `<img src="${imgSrc}" alt="${product.name}" />`;
   document.getElementById("qv-category").textContent  = product.category;
   document.getElementById("qv-name").textContent      = product.name;
@@ -480,7 +473,7 @@ function renderProducts() {
   }
 
   grid.innerHTML = filtered.map((p, idx) => {
-    const imgSrc = getProductImage(p.id) || p.image;
+    const imgSrc = p.image;
 
     return `
       <div class="product-card" data-animate="fade-up" style="transition-delay:${idx * 0.07}s">
@@ -521,54 +514,97 @@ function renderProductImageCards() {
   if (!container) return;
 
   container.innerHTML = products.map(p => {
-    const customImg = getProductImage(p.id);
-    const imgSrc    = customImg || p.image;
+    const hasImg = !!(p.image && !p.image.includes('placeholder.com'));
     return `
       <div class="product-img-card" id="img-card-${p.id}">
-        <img id="img-preview-${p.id}" src="${imgSrc}" alt="${p.name}" />
+        <img id="img-preview-${p.id}" src="${p.image}" alt="${p.name}" />
         <div class="product-img-card-body">
           <strong title="${p.name}">${p.name}</strong>
           <div class="product-img-actions">
-            <label class="btn-upload" for="img-file-${p.id}">&#128247; Upload</label>
+            <label class="btn-upload" id="upload-label-${p.id}" for="img-file-${p.id}">&#128247; Upload</label>
             <input type="file" id="img-file-${p.id}" accept="image/*" style="display:none" onchange="handleImageUpload(event, ${p.id})" />
-            ${customImg
-              ? `<button class="btn-remove-img" onclick="handleRemoveImage(${p.id})">Remove</button>`
+            ${hasImg
+              ? `<button class="btn-remove-img" id="remove-btn-${p.id}" onclick="handleRemoveImage(${p.id})">Remove</button>`
               : `<span id="remove-btn-${p.id}"></span>`
             }
           </div>
-          <div class="img-size-warning" id="img-warn-${p.id}">Please use an image under 2MB for best performance.</div>
+          <div class="img-size-warning" id="img-warn-${p.id}" style="display:none">File too large. Max 5MB.</div>
         </div>
       </div>`;
   }).join("");
 }
 
-function handleImageUpload(event, productId) {
+async function handleImageUpload(event, productId) {
   const file = event.target.files[0];
   if (!file) return;
-  const warn = document.getElementById(`img-warn-${productId}`);
-  if (file.size > 2 * 1024 * 1024) {
+
+  const warn  = document.getElementById(`img-warn-${productId}`);
+  const label = document.getElementById(`upload-label-${productId}`);
+
+  if (file.size > 5 * 1024 * 1024) {
     if (warn) warn.style.display = "block";
     event.target.value = "";
     return;
   }
   if (warn) warn.style.display = "none";
+
+  // Show local preview immediately while uploading
   const reader = new FileReader();
   reader.onload = e => {
-    saveProductImage(productId, e.target.result);
     const preview = document.getElementById(`img-preview-${productId}`);
     if (preview) preview.src = e.target.result;
-    const slot = document.getElementById(`remove-btn-${productId}`);
-    if (slot) slot.outerHTML = `<button class="btn-remove-img" onclick="handleRemoveImage(${productId})">Remove</button>`;
   };
   reader.readAsDataURL(file);
+
+  if (label) label.textContent = "⏳ Uploading…";
+
+  const formData = new FormData();
+  formData.append("product_id", productId);
+  formData.append("image", file);
+
+  try {
+    const { ok, data } = await gdFetch("backend/upload-image.php", {
+      method: "POST",
+      body:   formData,
+    });
+
+    if (ok && data.url) {
+      // Update in-memory product so all renders use the server URL
+      const p = products.find(p => p.id === productId);
+      if (p) p.image = data.url;
+      if (label) label.textContent = "&#128247; Upload";
+      const slot = document.getElementById(`remove-btn-${productId}`);
+      if (slot) slot.outerHTML = `<button class="btn-remove-img" id="remove-btn-${productId}" onclick="handleRemoveImage(${productId})">Remove</button>`;
+    } else {
+      alert("Image upload failed: " + (data?.error || "Unknown error"));
+      if (label) label.textContent = "&#128247; Upload";
+    }
+  } catch (err) {
+    console.error("[Upload] Error:", err);
+    alert("Upload failed. Check server connection.");
+    if (label) label.textContent = "&#128247; Upload";
+  }
+
+  event.target.value = "";
 }
 
-function handleRemoveImage(productId) {
-  removeProductImage(productId);
+async function handleRemoveImage(productId) {
   const product = products.find(p => p.id === productId);
+
+  try {
+    await gdFetch("backend/upload-image.php", {
+      method:  "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ product_id: productId }),
+    });
+  } catch (_) {}
+
+  if (product) {
+    product.image = `https://via.placeholder.com/400x300/2c2c2c/c9a84c?text=${encodeURIComponent(product.name)}`;
+  }
   const preview = document.getElementById(`img-preview-${productId}`);
   if (preview && product) preview.src = product.image;
-  const btn = document.querySelector(`#img-card-${productId} .btn-remove-img`);
+  const btn = document.getElementById(`remove-btn-${productId}`);
   if (btn) btn.outerHTML = `<span id="remove-btn-${productId}"></span>`;
 }
 
