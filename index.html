@@ -326,6 +326,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
+      <div id="navAuthArea"></div>
       <div class="nav-right">
         <button class="cart-btn" id="cart-btn" aria-label="Open cart">
           <svg class="cart-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -662,6 +663,123 @@
 
   </main>
 
+  <!-- ── Account Page ───────────────────────────────────────── -->
+  <div id="page-account" class="page">
+    <div style="max-width:900px;margin:0 auto;padding:4rem 2rem;">
+
+      <!-- Profile header -->
+      <div class="account-header">
+        <div class="account-avatar" id="accountAvatar">TM</div>
+        <div>
+          <div class="account-name" id="accountName">Loading…</div>
+          <div class="account-email" id="accountEmail"></div>
+          <div class="account-since" id="accountSince"></div>
+        </div>
+        <button class="btn-outline-sm" onclick="logout()">Sign Out</button>
+      </div>
+
+      <!-- Account tabs -->
+      <div class="account-tabs">
+        <button class="acct-tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
+        <button class="acct-tab" data-tab="orders"   onclick="showTab('orders')">My Orders</button>
+        <button class="acct-tab" data-tab="wishlist" onclick="showTab('wishlist')">Wishlist</button>
+        <button class="acct-tab" data-tab="profile"  onclick="showTab('profile')">Edit Profile</button>
+      </div>
+
+      <!-- OVERVIEW TAB -->
+      <div class="acct-pane active" id="acct-overview">
+        <div class="acct-stats">
+          <div class="acct-stat-card">
+            <div class="acct-stat-num" id="acctOrderCount">0</div>
+            <div class="acct-stat-lbl">Total Orders</div>
+          </div>
+          <div class="acct-stat-card">
+            <div class="acct-stat-num" id="acctWishCount">0</div>
+            <div class="acct-stat-lbl">Wishlist Items</div>
+          </div>
+          <div class="acct-stat-card">
+            <div class="acct-stat-num" id="acctSpend">R 0</div>
+            <div class="acct-stat-lbl">Total Spent</div>
+          </div>
+        </div>
+        <div style="margin-top:2rem;">
+          <div class="sec-tag">Quick Actions</div>
+          <div class="acct-actions">
+            <button class="acct-action-btn" onclick="showPage('home');document.getElementById('products')?.scrollIntoView({behavior:'smooth'})">Shop Now</button>
+            <button class="acct-action-btn" onclick="showTab('orders')">View Orders</button>
+            <button class="acct-action-btn" onclick="showTab('wishlist')">My Wishlist</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS TAB -->
+      <div class="acct-pane" id="acct-orders">
+        <div class="sec-tag" style="margin-bottom:1.5rem;">Order History</div>
+        <div id="userOrdersList">
+          <div style="text-align:center;color:var(--muted);padding:3rem;font-size:13px;">Loading orders…</div>
+        </div>
+      </div>
+
+      <!-- WISHLIST TAB -->
+      <div class="acct-pane" id="acct-wishlist">
+        <div class="sec-tag" style="margin-bottom:1.5rem;">Saved Items</div>
+        <div id="userWishlist">
+          <div style="text-align:center;color:var(--muted);padding:3rem;font-size:13px;">Loading wishlist…</div>
+        </div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div class="acct-pane" id="acct-profile">
+        <div class="sec-tag" style="margin-bottom:1.5rem;">Edit Profile</div>
+        <div class="profile-form">
+          <div class="auth-grid">
+            <div>
+              <label class="form-label">First Name</label>
+              <input type="text" id="prof-firstname" />
+            </div>
+            <div>
+              <label class="form-label">Last Name</label>
+              <input type="text" id="prof-lastname" />
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Phone Number</label>
+            <input type="tel" id="prof-phone" />
+          </div>
+          <div>
+            <label class="form-label">Default Delivery Address</label>
+            <textarea id="prof-address" style="height:80px;"></textarea>
+          </div>
+          <div class="auth-grid">
+            <div>
+              <label class="form-label">Province</label>
+              <select id="prof-province">
+                <option>Gauteng</option>
+                <option>Western Cape</option>
+                <option>Eastern Cape</option>
+                <option>KwaZulu-Natal</option>
+                <option>Limpopo</option>
+                <option>Mpumalanga</option>
+                <option>North West</option>
+                <option>Free State</option>
+                <option>Northern Cape</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Postal Code</label>
+              <input type="text" id="prof-postal" placeholder="0000" />
+            </div>
+          </div>
+          <button class="btn-primary" style="width:auto;padding:12px 32px;" onclick="saveProfile()">
+            Save Changes
+          </button>
+          <div class="auth-msg" id="profileMsg"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ── Footer ──────────────────────────────────────────────── -->
   <footer class="footer-main">
     <div class="footer-grid">
@@ -827,13 +945,13 @@
         <div id="modal-cart-summary"></div>
         <form id="order-form" novalidate>
           <div class="form-row">
-            <label>Full Name *<input type="text" name="order-name" placeholder="e.g. Thabo Nkosi" required /></label>
-            <label>Email *<input type="email" name="order-email" placeholder="you@email.com" required /></label>
+            <label>Full Name *<input type="text" id="o-name" name="order-name" placeholder="e.g. Thabo Nkosi" required /></label>
+            <label>Email *<input type="email" id="o-email" name="order-email" placeholder="you@email.com" required /></label>
           </div>
           <div class="form-row">
-            <label>Phone *<input type="tel" name="order-phone" placeholder="+27 XX XXX XXXX" required /></label>
+            <label>Phone *<input type="tel" id="o-phone" name="order-phone" placeholder="+27 XX XXX XXXX" required /></label>
           </div>
-          <label>Delivery Address *<textarea name="order-address" placeholder="Street, City, Postal Code" required></textarea></label>
+          <label>Delivery Address *<textarea id="o-address" name="order-address" placeholder="Street, City, Postal Code" required></textarea></label>
           <label>Delivery Province *
             <select name="order-province" required onchange="onProvinceChange(this)">
               <option value="">— Select your province —</option>
@@ -929,11 +1047,120 @@
     </svg>
   </a>
 
+  <!-- ── Auth Modal ────────────────────────────────────────── -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal auth-modal">
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="Close">&times;</button>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" data-tab="login"
+                onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab-btn" data-tab="register"
+                onclick="switchAuthTab('register')">Create Account</button>
+      </div>
+
+      <!-- LOGIN PANE -->
+      <div class="auth-tab-pane active" id="auth-login">
+        <div class="auth-header">
+          <div class="auth-title">Welcome back</div>
+          <div class="auth-sub">Sign in to your Gen Dimension account</div>
+        </div>
+        <div class="auth-form">
+          <div>
+            <label class="form-label">Email Address</label>
+            <input type="email" id="login-email" placeholder="your@email.com"
+                   onkeydown="if(event.key==='Enter')submitLogin()" />
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" placeholder="Your password"
+                   onkeydown="if(event.key==='Enter')submitLogin()" />
+          </div>
+          <div class="auth-row">
+            <label class="auth-check">
+              <input type="checkbox" id="login-remember" />
+              <span>Remember me</span>
+            </label>
+            <a class="auth-link" onclick="switchAuthTab('forgot')">Forgot password?</a>
+          </div>
+          <div class="auth-msg"></div>
+          <button class="btn-primary" id="loginBtn" onclick="submitLogin()">Sign In</button>
+          <p class="auth-switch">Don't have an account?
+            <a class="auth-link" onclick="switchAuthTab('register')">Create one</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- REGISTER PANE -->
+      <div class="auth-tab-pane" id="auth-register">
+        <div class="auth-header">
+          <div class="auth-title">Create your account</div>
+          <div class="auth-sub">Join Gen Dimension for a better shopping experience</div>
+        </div>
+        <div class="auth-form">
+          <div class="auth-grid">
+            <div>
+              <label class="form-label">First Name</label>
+              <input type="text" id="reg-firstname" placeholder="Thabo" />
+            </div>
+            <div>
+              <label class="form-label">Last Name</label>
+              <input type="text" id="reg-lastname" placeholder="Nkosi" />
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Email Address</label>
+            <input type="email" id="reg-email" placeholder="your@email.com" />
+          </div>
+          <div>
+            <label class="form-label">Phone Number</label>
+            <input type="tel" id="reg-phone" placeholder="+27 xx xxx xxxx" />
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input type="password" id="reg-password" placeholder="Min. 8 characters" />
+          </div>
+          <div>
+            <label class="form-label">Confirm Password</label>
+            <input type="password" id="reg-confirm" placeholder="Repeat password" />
+          </div>
+          <div class="auth-msg"></div>
+          <button class="btn-primary" id="registerBtn" onclick="submitRegister()">Create Account</button>
+          <p class="auth-switch">Already have an account?
+            <a class="auth-link" onclick="switchAuthTab('login')">Sign in</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD PANE -->
+      <div class="auth-tab-pane" id="auth-forgot">
+        <div class="auth-header">
+          <div class="auth-title">Reset your password</div>
+          <div class="auth-sub">Enter your email and we'll send a reset link</div>
+        </div>
+        <div class="auth-form">
+          <div>
+            <label class="form-label">Email Address</label>
+            <input type="email" id="forgot-email" placeholder="your@email.com" />
+          </div>
+          <div class="auth-msg"></div>
+          <button class="btn-primary" onclick="submitForgotPassword()">Send Reset Link</button>
+          <p class="auth-switch">
+            <a class="auth-link" onclick="switchAuthTab('login')">Back to Sign In</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <script src="js/cart.js"></script>
   <script src="js/reviews.js"></script>
   <script src="js/orders.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="js/emailjs.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

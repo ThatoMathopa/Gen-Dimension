@@ -154,4 +154,19 @@ if ($action === 'export-newsletter') {
     exit();
 }
 
+// ── Users ─────────────────────────────────────────────────────
+if ($action === 'users') {
+    $users = $db->query(
+        "SELECT u.id, u.first_name, u.last_name, u.email,
+                u.phone, u.province, u.email_verified,
+                u.created_at, u.last_login,
+                COUNT(o.id) as order_count
+         FROM users u
+         LEFT JOIN orders o ON u.email = o.customer_email
+         GROUP BY u.id
+         ORDER BY u.created_at DESC"
+    )->fetchAll();
+    jsonOk($users);
+}
+
 jsonError('Unknown action', 400);

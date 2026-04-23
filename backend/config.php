@@ -49,7 +49,7 @@ define('SITE_URL',        'https://gendimension.co.za');
 define('PAYFAST_MERCHANT_ID',  '34464777');
 define('PAYFAST_MERCHANT_KEY', 'dlafzyubih35x');
 define('PAYFAST_PASSPHRASE',   '');
-define('PAYFAST_SANDBOX',      true);
+define('PAYFAST_SANDBOX',      false);
 
 // ── CORS Headers ─────────────────────────────────────────────────
 function setCorsHeaders() {

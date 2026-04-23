@@ -26,6 +26,33 @@ function onProvinceChange(select) {
   if (box) box.style.display = (select.value && select.value !== 'Gauteng') ? 'flex' : 'none';
 }
 
+// ── Page routing ───────────────────────────────────────────────
+function showPage(p) {
+  const main = document.querySelector('main');
+  const footer = document.querySelector('footer.footer-main');
+  document.querySelectorAll('.page').forEach(el => (el.style.display = 'none'));
+  if (p === 'home') {
+    if (main)   main.style.display   = '';
+    if (footer) footer.style.display = '';
+  } else if (p === 'account') {
+    if (main)   main.style.display   = 'none';
+    if (footer) footer.style.display = 'none';
+    const pg = document.getElementById('page-account');
+    if (pg) pg.style.display = 'block';
+    if (typeof loadAccountPage === 'function') loadAccountPage();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Order modal helper (for wishlist "Add to Cart") ────────────
+function openOrderModal(productId) {
+  const p = products.find(pr => pr.id == productId);
+  if (!p) return;
+  addToCart(p);
+  showAddToCartToast(p.name);
+  openCartSidebar();
+}
+
 async function loadProducts() {
   try {
     const { ok, data } = await gdFetch("backend/products.php");
@@ -508,6 +535,12 @@ function renderProducts() {
           <div class="product-card-overlay">
             <button class="btn-quick-view" onclick="openQuickView(${p.id})">Quick View</button>
           </div>
+          <button class="wishlist-btn" data-wishlist="${p.id}" aria-label="Save to wishlist"
+                  onclick="toggleWishlist(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
         </div>
         <div class="card-body">
           <h3>${p.name}</h3>
@@ -1041,7 +1074,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Global Escape key
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { closeQuickView(); closeCartSidebar(); closeLegalModal(); closeOrderModal(); }
+    if (e.key === "Escape") {
+      closeQuickView(); closeCartSidebar(); closeLegalModal(); closeOrderModal();
+      if (typeof closeAuthModal === 'function') closeAuthModal();
+    }
   });
 
   // Hamburger
@@ -1088,6 +1124,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Legal modal backdrop click
   document.getElementById("legal-modal")?.addEventListener("click", e => {
     if (e.target === e.currentTarget) closeLegalModal();
+  });
+
+  // Auth modal backdrop click
+  document.getElementById("authModal")?.addEventListener("click", e => {
+    if (e.target === e.currentTarget && typeof closeAuthModal === 'function') closeAuthModal();
   });
 
   // Load products from API, then render anything that depends on them
