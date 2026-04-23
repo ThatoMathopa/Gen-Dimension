@@ -1390,6 +1390,136 @@ input, textarea, select {
   font-weight: 500;
 }
 
+/* ─── MoreTyme ────────────────────────────────────────────────── */
+.moretyme-hero-strip {
+  width: 100%;
+  background: #000;
+  text-align: center;
+}
+.moretyme-hero-strip a {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.moretyme-hero-strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.moretyme-banner-mobile  { display: none; }
+.moretyme-banner-desktop { display: block; }
+@media (max-width: 768px) {
+  .moretyme-banner-desktop { display: none; }
+  .moretyme-banner-mobile  { display: block; }
+}
+
+.card-moretyme {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin: -0.3rem 0 0.35rem;
+}
+.moretyme-inline-logo {
+  height: 16px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.modal-moretyme-box {
+  background: #FFF9E6;
+  border: 0.5px solid #F5C518;
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+.modal-moretyme-logo {
+  height: 20px;
+  margin-bottom: 0.4rem;
+}
+.modal-moretyme-text {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  margin: 0 0 0.35rem;
+  line-height: 1.5;
+}
+.modal-moretyme-amount {
+  font-size: 0.9rem;
+  color: var(--accent-dark);
+  margin: 0;
+}
+
+.moretyme-about {
+  background: var(--surface-2);
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+}
+.moretyme-about-inner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.moretyme-about-logo {
+  height: 36px;
+  margin-bottom: var(--space-4);
+}
+.moretyme-about-heading {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--space-3);
+}
+.moretyme-about-body {
+  color: var(--text-soft);
+  font-size: 1rem;
+  line-height: 1.75;
+  margin-bottom: var(--space-4);
+}
+.moretyme-about-link {
+  color: var(--accent-dark);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color var(--duration);
+}
+.moretyme-about-link:hover { color: var(--accent); }
+
+.moretyme-sticky-banner {
+  display: none; /* shown via JS on mobile */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 150;
+  background: #000;
+}
+.moretyme-sticky-banner a { display: block; }
+.moretyme-sticky-banner img { display: block; width: 100%; height: auto; }
+.moretyme-sticky-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+@media (max-width: 768px) {
+  .moretyme-sticky-banner { display: block; }
+}
+
 /* ─── Footer ─────────────────────────────────────────────────── */
 .footer-main {
   background-color: #151513;

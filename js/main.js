@@ -512,6 +512,7 @@ function renderProducts() {
         <div class="card-body">
           <h3>${p.name}</h3>
           <p class="price">R\u00a0${p.price.toLocaleString("en-ZA")}</p>
+          <p class="card-moretyme">or 3&nbsp;&times;&nbsp;R${Math.ceil(p.price / 3).toLocaleString("en-ZA")} with <img src="images/moretyme/x1/PayFast&Moretyme_Logo_OnLightBackground.png" alt="MoreTyme" class="moretyme-inline-logo" /></p>
           <p class="card-delivery-note">Delivery info at checkout</p>
           <p>${p.description}</p>
           <button class="btn btn-add-cart" onclick="addToCartFromCard(${p.id})">Add to Cart</button>
@@ -695,6 +696,11 @@ function openCartCheckout() {
           <strong id="modal-summary-total">R&nbsp;${getCartSubtotal().toLocaleString("en-ZA")}</strong>
         </div>
         <p class="fee-note" style="text-align:center;">Final total shown after selecting province</p>
+      </div>
+      <div class="modal-moretyme-box">
+        <img src="images/moretyme/x1/PayFast&Moretyme_Logo_OnLightBackground.png" alt="MoreTyme" class="modal-moretyme-logo" />
+        <p class="modal-moretyme-text">Split your payment into 3 equal instalments at no extra cost. Available at checkout via PayFast.</p>
+        <p class="modal-moretyme-amount">3&nbsp;&times;&nbsp;<strong>R&nbsp;${Math.ceil(getCartSubtotal() / 3).toLocaleString("en-ZA")}</strong></p>
       </div>`;
   }
 
@@ -853,6 +859,28 @@ async function submitOrderAndPay(e) {
     alert("Network error. Please try again or WhatsApp us: +27 79 879 6513");
     if (btn) { btn.disabled = false; btn.textContent = "Continue to Payment →"; }
   }
+}
+
+// ── MoreTyme sticky banner ─────────────────────────────────────
+function closeMoretymeBanner() {
+  const el = document.getElementById('moretyme-sticky-banner');
+  if (el) el.style.display = 'none';
+  try { sessionStorage.setItem('gd_mt_banner_closed', '1'); } catch (_) {}
+}
+
+function initMoretymeStickyBanner() {
+  const el = document.getElementById('moretyme-sticky-banner');
+  if (!el) return;
+
+  // Stay closed if dismissed this session
+  try { if (sessionStorage.getItem('gd_mt_banner_closed')) { el.style.display = 'none'; return; } } catch (_) {}
+
+  // Hide once user has scrolled to / past the checkout section
+  const modal = document.getElementById('order-modal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) el.style.display = 'none'; });
+  }, { threshold: 0.1 });
+  if (modal) observer.observe(modal);
 }
 
 function initPaymentReturnBanners() {
@@ -1048,6 +1076,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initContactForm();
   initFooter();
   initPaymentReturnBanners();
+  initMoretymeStickyBanner();
 
   // Order modal
   document.getElementById("order-form")?.addEventListener("submit", submitOrderAndPay);
